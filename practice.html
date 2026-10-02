@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Practice</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<header>
+    <h1>🎯 Practice</h1>
+    <p id="questionInfo">Question loading...</p>
+</header>
+
+<main>
+
+    <div id="questionBox">
+
+        <h2 id="questionText">Loading...</h2>
+
+        <div id="options"></div>
+
+        <p id="result"></p>
+
+        <button id="nextBtn" style="display:none;">
+            Next Question →
+        </button>
+
+    </div>
+
+</main>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+let currentQuestion = null;
+
+async function loadQuestion() {
+
+    const response = await fetch(`${API}/questions/next`);
+
+    currentQuestion = await response.json();
+
+    document.getElementById("questionInfo").textContent =
+        `${currentQuestion.subject} • ${currentQuestion.topic}`;
+
+    document.getElementById("questionText").textContent =
+        currentQuestion.question;
+
+    const optionsBox = document.getElementById("options");
+
+    optionsBox.innerHTML = "";
+
+    currentQuestion.options.forEach(option => {
+
+        const button = document.createElement("button");
+
+        button.textContent = option;
+
+        button.onclick = () => submitAnswer(option);
+
+        optionsBox.appendChild(button);
+    });
+}
+
+
+async function submitAnswer(answer) {
+
+    const response = await fetch(`${API}/answer`, {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            question_id: currentQuestion.id,
+            answer: answer
+        })
+    });
+
+    const result = await response.json();
+
+    document.getElementById("result").textContent =
+        result.correct ? "✅ Correct!" : "❌ Wrong!";
+
+    document.querySelectorAll("#options button")
+        .forEach(button => button.disabled = true);
+
+    document.getElementById("nextBtn").style.display = "block";
+}
+
+
+document.getElementById("nextBtn").onclick = () => {
+
+    document.getElementById("result").textContent = "";
+
+    document.getElementById("nextBtn").style.display = "none";
+
+    loadQuestion();
+};
+
+
+loadQuestion();
+</script>
+
+</body>
+</html>
